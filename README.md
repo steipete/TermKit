@@ -1,61 +1,96 @@
+# TermKit 🧰 — Swift interfaces, right in your terminal
 
+[![Swift](https://img.shields.io/badge/Swift-6.0-F05138?style=flat-square&logo=swift&logoColor=white)](https://www.swift.org/)
+[![Platform](https://img.shields.io/badge/platform-macOS%2015%2B-000000?style=flat-square&logo=apple)](https://developer.apple.com/macos/)
+[![License](https://img.shields.io/github/license/steipete/TermKit?style=flat-square)](LICENSE)
 
-# TermKit - Terminal UI Toolkit for Swift
+TermKit is a Swift package for building text-based interfaces on macOS. It provides a curses-backed application loop, layout system, controls, dialogs, and an embeddable terminal view for interactive command-line tools.
 
-This is a simple UI Toolkit for Swift, a port of my [gui.cs library
-for .NET](https://github.com/migueldeicaza/gui.cs).   While I originally
-wrote gui.cs, it has evolved significantly by the contributions of
-Charlie Kindel (@tig), @BDisp and various other contributors - this port 
-is bringing their work.
+<img width="1222" alt="TermKit example application showing menus, windows, and controls" src="docs/assets/termkit-example.png">
 
-This toolkit contains various controls for build text user interfaces
-using Swift.
+## Install
 
-You can [checkout the documentation](https://migueldeicaza.github.io/TermKit/index.html)
+TermKit is source-only and has no tagged releases. Add the `main` branch to your Swift package dependencies:
 
-<img width="1222" alt="Screen Shot 2021-03-13 at 12 44 05 PM" src="https://user-images.githubusercontent.com/36863/111039012-d6df8400-83f9-11eb-9215-88549635a33f.png">
-
-# Running this
-
-From the command line:
-
-```
-$ swift build
-$ swift run
+```swift
+dependencies: [
+    .package(url: "https://github.com/steipete/TermKit.git", branch: "main")
+]
 ```
 
-From Xcode, if you want to debug, it is best to make sure that the
-application that you want to Debug (in this project, the "Example"
-target is what you want) has its Scheme for Running configured
-like this:
+Then add the library product to your executable target:
 
-     * Run/Info: Launch "Wait for Executable to be launched"
-
-Then, when you run, switch to a console, and run the executable, I have my
-global settings for DerivedData to be relative to the current directory,
-so I can run it like this:
-
-```
-$ DerivedData/TermKit/Build/Products/Debug/Example
+```swift
+.executableTarget(
+    name: "MyApp",
+    dependencies: [
+        .product(name: "TermKit", package: "TermKit")
+    ]
+)
 ```
 
-The location for where your executable is produced is configured in Xcode/Preferences/Locations,
-I just happen to like project-relative output like the example above shows.
+TermKit requires a Swift 6 toolchain and macOS 15 or newer.
 
-# Debugging
+## Quick start
 
-While debugging is useful, sometimes it can be obnoxious to single step or debug over
-code that is called too many times in a row, so printf-like debugging is convenient.
+Put this in your executable target's `main.swift`:
 
-Except that prints go to the same console where your application is running, making this
-experience painful.
+```swift
+import TermKit
 
-In that case, you can call `Application.log` with a message, and this message will use
-MacOS `os_log`, which you can then either look for in the Console.app, or you can monitor from 
-a terminal window like this:
+Application.prepare()
 
+let window = Window("Hello")
+window.fill()
+
+let quit = Button("_Quit") { Application.shutdown() }
+quit.isDefault = true
+quit.x = Pos.center()
+quit.y = Pos.center()
+
+window.addSubviews([Label("Hello from TermKit"), quit])
+Application.top.addSubview(window)
+Application.run()
 ```
-$ log stream --style compact --predicate 'subsystem == "termkit"'
+
+Run the package, then press Return on **Quit** to restore the terminal and exit:
+
+```sh
+swift run
 ```
 
+## Compose an interface
 
+Every interface starts with `Application.prepare()`, attaches views beneath `Application.top`, and hands control to `Application.run()`. Views can use fixed coordinates or responsive `Pos` and `Dim` rules; `fill()` expands a view to its parent.
+
+The main control groups are:
+
+| Need | Types |
+| --- | --- |
+| Windows and layout | `Window`, `Frame`, `ScrollView`, `SplitView` |
+| Text and editing | `Label`, `TextField`, `TextView`, `HexView` |
+| Choices and data | `Button`, `Checkbox`, `RadioGroup`, `ListView`, `DataTable` |
+| Navigation | `MenuBar`, `StatusBar` |
+| Prompts and files | `Dialog`, `MessageBox`, `InputBox`, `OpenDialog`, `SaveDialog` |
+| Terminal sessions | `LocalProcessTerminalView` |
+
+See the [upstream API reference](https://migueldeicaza.github.io/TermKit/index.html) and [DECISIONS.md](DECISIONS.md) for the original design notes.
+
+## Development
+
+Build the package and launch the bundled control gallery:
+
+```sh
+swift build
+swift run Example
+```
+
+The gallery is interactive and runs in the current terminal. Xcode attachment and logging notes live in [docs/development.md](docs/development.md).
+
+## Credits
+
+TermKit began as [Miguel de Icaza's](https://github.com/migueldeicaza) Swift port of [gui.cs](https://github.com/migueldeicaza/gui.cs). It carries work and ideas from [Charlie Kindel](https://github.com/tig), [BDisp](https://github.com/BDisp), and the other gui.cs contributors.
+
+## License
+
+TermKit is available under the [MIT License](LICENSE). Copyright 2019–2022 Miguel de Icaza.
